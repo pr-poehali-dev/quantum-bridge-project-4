@@ -4,12 +4,14 @@ import Icon from "@/components/ui/icon";
 
 const ORDERS_URL = "https://functions.poehali.dev/543e5a58-fc16-4bf4-ab12-812ef6ce6ded";
 
+interface CartExtra { id: number; name: string; price: number; }
 interface CartItem {
   id: number;
   name: string;
   price: number;
   qty: number;
   image_url?: string;
+  extras: CartExtra[];
 }
 
 export default function Checkout() {
@@ -47,7 +49,7 @@ export default function Checkout() {
           customer_name: name.trim(),
           customer_phone: phone.trim(),
           comment: comment.trim(),
-          items: cart.map(c => ({ id: c.id, name: c.name, price: c.price, qty: c.qty })),
+          items: cart.map(c => ({ id: c.id, name: c.name, price: c.price + (c.extras || []).reduce((s: number, e: CartExtra) => s + e.price, 0), qty: c.qty, extras: c.extras || [] })),
           total,
         }),
       });
@@ -102,12 +104,18 @@ export default function Checkout() {
             Ваш заказ
           </div>
           <div style={{ padding: "16px 20px", display: "flex", flexDirection: "column", gap: "10px" }}>
-            {cart.map(item => (
-              <div key={item.id} style={{ display: "flex", justifyContent: "space-between", fontSize: "15px" }}>
-                <span>{item.name} <span style={{ color: "#999" }}>× {item.qty}</span></span>
-                <span style={{ fontWeight: 700 }}>{item.price * item.qty} ₽</span>
-              </div>
-            ))}
+            {cart.map(item => {
+              const unitPrice = item.price + (item.extras || []).reduce((s: number, e: CartExtra) => s + e.price, 0);
+              return (
+                <div key={item.id}>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "15px" }}>
+                    <span>{item.name} <span style={{ color: "#999" }}>× {item.qty}</span></span>
+                    <span style={{ fontWeight: 700 }}>{unitPrice * item.qty} ₽</span>
+                  </div>
+                  {item.extras && item.extras.length > 0 && <div style={{ fontSize: "12px", color: "#aaa", paddingLeft: "8px", marginTop: "2px" }}>{item.extras.map((e: CartExtra) => `${e.name}${e.price > 0 ? ` +${e.price}₽` : ""}`).join(", ")}</div>}
+                </div>
+              );
+            })}
             <div style={{ borderTop: "2px solid #1a1a1a", paddingTop: "12px", display: "flex", justifyContent: "space-between", fontWeight: 800, fontSize: "18px" }}>
               <span>Итого</span>
               <span style={{ color: "var(--primary)" }}>{total} ₽</span>
