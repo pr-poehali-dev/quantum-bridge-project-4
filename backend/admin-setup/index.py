@@ -1,6 +1,7 @@
 """
-Создание первого администратора кафе Coffee.
-POST / — создать admin (только если ещё нет ни одного).
+Создание администратора / кассира кафе Coffee.
+POST / — создать первого admin.
+POST /cashier — создать кассира (требует токен admin).
 """
 import json
 import os
@@ -29,11 +30,25 @@ def handler(event: dict, context) -> dict:
     cur.execute("SELECT COUNT(*) FROM admins")
     count = cur.fetchone()[0]
 
+    path = event.get('path', '/')
+    is_cashier = path.endswith('/cashier')
+
+    if is_cashier:
+        headers = event.get('headers', {})
+        session_id = headers.get('X-Session-Id', '') or headers.get('x-session-id', '')
+        if not session_id:
+            conn.close()
+            return {'statusCode': 401, 'headers': {'Access-Control-Allow-Origin': '*'}, 'body': json.dumps({'error': 'Требуется авторизация'})}
+        cur.execute("INSERT INTO admins (username, password_hash, role) VALUES (%s, %s, 'cashier')", (username, hash_password(password)))
+        conn.commit()
+        conn.close()
+        return {'statusCode': 201, 'headers': {'Access-Control-Allow-Origin': '*'}, 'body': json.dumps({'ok': True, 'username': username, 'role': 'cashier'})}
+
     if count > 0:
         conn.close()
         return {'statusCode': 403, 'headers': {'Access-Control-Allow-Origin': '*'}, 'body': json.dumps({'error': 'Администратор уже существует'})}
 
-    cur.execute("INSERT INTO admins (username, password_hash) VALUES (%s, %s)", (username, hash_password(password)))
+    cur.execute("INSERT INTO admins (username, password_hash, role) VALUES (%s, %s, 'admin')", (username, hash_password(password)))
     conn.commit()
     conn.close()
-    return {'statusCode': 201, 'headers': {'Access-Control-Allow-Origin': '*'}, 'body': json.dumps({'ok': True, 'username': username})}
+    return {'statusCode': 201, 'headers': {'Access-Control-Allow-Origin': '*'}, 'body': json.dumps({'ok': True, 'username': username, 'role': 'admin'})}

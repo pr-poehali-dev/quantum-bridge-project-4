@@ -25,11 +25,12 @@ def handler(event: dict, context) -> dict:
     method = event.get('httpMethod', 'GET')
     path = event.get('path', '/')
     headers = event.get('headers', {})
-    session_id = headers.get('X-Session-Id', '')
+    session_id = headers.get('X-Session-Id', '') or headers.get('x-session-id', '')
 
     if method == 'GET':
         if session_id in SESSIONS:
-            return {'statusCode': 200, 'headers': {'Access-Control-Allow-Origin': '*'}, 'body': json.dumps({'ok': True, 'username': SESSIONS[session_id]})}
+            s = SESSIONS[session_id]
+            return {'statusCode': 200, 'headers': {'Access-Control-Allow-Origin': '*'}, 'body': json.dumps({'ok': True, 'username': s['username'], 'role': s['role']})}
         return {'statusCode': 401, 'headers': {'Access-Control-Allow-Origin': '*'}, 'body': json.dumps({'ok': False})}
 
     body = json.loads(event.get('body') or '{}')
@@ -47,7 +48,7 @@ def handler(event: dict, context) -> dict:
     conn = get_db()
     cur = conn.cursor()
 
-    cur.execute("SELECT id, username FROM admins WHERE username = %s AND password_hash = %s", (username, hash_password(password)))
+    cur.execute("SELECT id, username, role FROM admins WHERE username = %s AND password_hash = %s", (username, hash_password(password)))
     admin = cur.fetchone()
     conn.close()
 
@@ -55,5 +56,6 @@ def handler(event: dict, context) -> dict:
         return {'statusCode': 401, 'headers': {'Access-Control-Allow-Origin': '*'}, 'body': json.dumps({'ok': False, 'error': 'Неверный логин или пароль'})}
 
     token = secrets.token_hex(32)
-    SESSIONS[token] = username
-    return {'statusCode': 200, 'headers': {'Access-Control-Allow-Origin': '*'}, 'body': json.dumps({'ok': True, 'token': token, 'username': username})}
+    role = admin[2] or 'admin'
+    SESSIONS[token] = {'username': username, 'role': role}
+    return {'statusCode': 200, 'headers': {'Access-Control-Allow-Origin': '*'}, 'body': json.dumps({'ok': True, 'token': token, 'username': username, 'role': role})}

@@ -26,7 +26,9 @@ export default function AdminLogin() {
       if (data.ok) {
         localStorage.setItem("admin_token", data.token);
         localStorage.setItem("admin_username", data.username);
-        navigate("/admin");
+        localStorage.setItem("admin_role", data.role || "admin");
+        if (data.role === "cashier") navigate("/admin/orders");
+        else navigate("/admin");
       } else {
         setError(data.error || "Ошибка входа");
       }

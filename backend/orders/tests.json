@@ -1,0 +1,16 @@
+{
+  "tests": [
+    {
+      "name": "Get order without number",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 400
+    },
+    {
+      "name": "Create order without body",
+      "method": "POST",
+      "path": "/",
+      "expectedStatus": 400
+    }
+  ]
+}

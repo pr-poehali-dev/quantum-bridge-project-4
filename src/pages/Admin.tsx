@@ -114,8 +114,9 @@ export default function Admin() {
           <div style={{ fontFamily: "Unbounded, sans-serif", fontWeight: 800, fontSize: "18px" }}>COFFEE*CAFÉ</div>
           <span style={{ background: "var(--accent)", padding: "2px 10px", border: "var(--border)", fontSize: "11px", fontWeight: 800, textTransform: "uppercase" }}>Админ</span>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
           <span style={{ fontSize: "14px", color: "#666" }}>{username}</span>
+          <button onClick={() => navigate("/admin/orders")} className="btn-cta" style={{ fontSize: "12px", padding: "8px 16px", background: "var(--primary)", color: "white" }}>Заказы</button>
           <button onClick={logout} className="btn-cta" style={{ fontSize: "12px", padding: "8px 16px" }}>Выйти</button>
         </div>
       </header>
